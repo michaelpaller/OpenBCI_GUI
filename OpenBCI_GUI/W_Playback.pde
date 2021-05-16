@@ -90,13 +90,6 @@ class W_playback extends Widget {
     }
 
     public void refreshPlaybackList() {
-
-        File f = new File(userPlaybackHistoryFile);
-        if (!f.exists()) {
-            println("OpenBCI_GUI::RefreshPlaybackList: Playback history file not found.");
-            return;
-        }
-
         try {
             playbackMenuList.items.clear();
             loadPlaybackHistoryJSON = loadJSONObject(userPlaybackHistoryFile);
@@ -239,7 +232,12 @@ boolean playbackFileSelected (String longName, String shortName) {
             verbosePrint("PLAYBACK: Found SD File Header in File!");
             playbackData_fname = "N/A";
             sdData_fname = longName;
-        } else {
+        } else if (line.contains("#")) {
+            verbosePrint("PLAYBACK: Found LOG File Header in File!");
+            playbackData_fname = "N/A";
+            sdData_fname = "N/A";
+            logData_fname = longName;
+        }else {
             outputError("ERROR: Tried to load an unsupported file for playback! Please try a valid file.");
             playbackData_fname = "N/A";
             playbackData_ShortName = "N/A";
@@ -258,24 +256,20 @@ boolean playbackFileSelected (String longName, String shortName) {
     outputSuccess("You have selected \""
     + shortName + "\" for playback.");
 
-    File f = new File(userPlaybackHistoryFile);
-    if (!f.exists()) {
-        println("OpenBCI_GUI::playbackFileSelected: Playback history file not found.");
+    try {
+        savePlaybackHistoryJSON = loadJSONObject(userPlaybackHistoryFile);
+        JSONArray recentFilesArray = savePlaybackHistoryJSON.getJSONArray("playbackFileHistory");
+        playbackHistoryFileExists = true;
+    } catch (NullPointerException e) {
+        //println("Playback history JSON file does not exist. Load first file to make it.");
         playbackHistoryFileExists = false;
-    } else {
-        try {
-            savePlaybackHistoryJSON = loadJSONObject(userPlaybackHistoryFile);
-            JSONArray recentFilesArray = savePlaybackHistoryJSON.getJSONArray("playbackFileHistory");
-            playbackHistoryFileExists = true;
-        } catch (RuntimeException e) {
-            outputError("Found an error in UserPlaybackHistory.json. Deleting this file. Please, Restart the GUI.");
-            File file = new File(userPlaybackHistoryFile);
-            if (!file.isDirectory()) {
-                file.delete();
-            }
+    } catch (RuntimeException e) {
+        outputError("Found an error in UserPlaybackHistory.json. Deleting this file. Please, Restart the GUI.");
+        File file = new File(userPlaybackHistoryFile);
+        if (!file.isDirectory()) {
+            file.delete();
         }
     }
-    
     //add playback file that was processed to the JSON history
     savePlaybackFileToHistory(longName);
     return true;

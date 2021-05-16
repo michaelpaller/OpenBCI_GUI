@@ -8,7 +8,6 @@
 //   Modified (v2.0): Conor Russomanno & Joel Murphy (AJ Keller helped too), June 2016
 //   Modified (v3.0) AJ Keller (Conor Russomanno & Joel Murphy & Wangshu), September 2017
 //   Modified (v4.0) AJ Keller (Richard Waltman), September 2018
-//   Modified (v5.0) Richard Waltman, August 2020
 //
 //   Requires gwoptics graphing library for processing.  Built on V0.5.0
 //   http://www.gwoptics.org/processing/gwoptics_p5lib/
@@ -65,14 +64,12 @@ import http.requests.*;
 //                       Global Variables & Instances
 //------------------------------------------------------------------------
 //Used to check GUI version in TopNav.pde and displayed on the splash screen on startup
-String localGUIVersionString = "v5.0.4";
-String localGUIVersionDate = "March 2021";
+String localGUIVersionString = "v5.0.3";
+String localGUIVersionDate = "January 2021";
 String guiLatestVersionGithubAPI = "https://api.github.com/repos/OpenBCI/OpenBCI_GUI/releases/latest";
 String guiLatestReleaseLocation = "https://github.com/OpenBCI/OpenBCI_GUI/releases/latest";
 
 PApplet ourApplet;
-
-CopyPaste copyPaste;
 
 //used to switch between application states
 final int SYSTEMMODE_INTROANIMATION = -10;
@@ -118,6 +115,7 @@ String startupErrorMessage = "";
 //here are variables that are used if loading input data from a CSV text file...double slash ("\\") is necessary to make a single slash
 String playbackData_fname = "N/A"; //only used if loading input data from a file
 String sdData_fname = "N/A"; //only used if loading input data from a sd file
+String logData_fname = "N/A"; //only used if loading input data from a log file
 int nextPlayback_millis = -100; //any negative number
 
 // Initialize board
@@ -318,8 +316,6 @@ void settings() {
 void setup() {
     frameRate(120);
 
-    copyPaste = new CopyPaste();
-
     //V1 FONTS
     f1 = createFont("fonts/Raleway-SemiBold.otf", 16);
     f2 = createFont("fonts/Raleway-Regular.otf", 15);
@@ -400,6 +396,19 @@ void delayedSetup() {
     settings.heightOfLastScreen = height;
 
     setupContainers();
+    
+    //listen for window resize ... used to adjust elements in application
+    //Doesn't seem to work...
+    frame.addComponentListener(new ComponentAdapter() {
+        public void componentResized(ComponentEvent e) {
+            if (e.getSource().equals(frame)) {
+                settings.screenHasBeenResized = true;
+                settings.timeOfLastScreenResize = millis();
+                // initializeGUI();
+            }
+        }
+    }
+    );
 
     fontInfo = new PlotFontInfo();
     helpWidget = new HelpWidget(0, win_h - 30, win_w, 30);
@@ -521,19 +530,23 @@ void initSystem() {
             println("OpenBCI_GUI: Init session using Synthetic data source");
             break;
         case DATASOURCE_PLAYBACKFILE:
-            if (!playbackData_fname.equals("N/A")) {
-                currentBoard = new DataSourcePlayback(playbackData_fname);
+	    if (!logData_fname.equals("N/A")) {
+		currentBoard = new DataSourceLOGFile(logData_fname);
+	    } else {
                 println("OpenBCI_GUI: Init session using Playback data source");
-            } else {
-                if (!sdData_fname.equals("N/A")) {
+            	if (!playbackData_fname.equals("N/A")) {
+                    currentBoard = new DataSourcePlayback(playbackData_fname);
+                    println("OpenBCI_GUI: Init session using Playback data source");
+            	} else {
+                    if (!sdData_fname.equals("N/A")) {
                     currentBoard = new DataSourceSDCard(sdData_fname);
                     println("OpenBCI_GUI: Init session using Playback data source");
-                }
-                else {
-                    // no code path to it
-                    println("No playback or SD file selected.");
-                }
-            }
+                    } else {
+                    	// no code path to it
+                    	println("No playback or SD file selected.");
+                    }
+            	}
+	    }
             break;
         case DATASOURCE_GANGLION:
             if (selectedProtocol == BoardProtocol.WIFI) {
