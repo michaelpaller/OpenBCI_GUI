@@ -1,0 +1,16 @@
+Console Log Started at Local Time: 2021-05-22_04-10-17
+Screen Resolution: 1440 X 900
+Operating System: Mac
+Welcome to the Processing-based OpenBCI GUI!
+For more information, please visit: https://openbci.github.io/Documentation/docs/06Software/01-OpenBCISoftware/GUIDocs
+OpenBCI_GUI::Setup: Copying sample data to Documents/OpenBCI_GUI/Sample_Data
+OpenBCI_GUI::Setup: Created \Documents\OpenBCI_GUI\Recordings\
+ControlP5 2.3.1 infos, comments, questions at http://www.sojamo.de/libraries/controlP5
+TopNav: Internet Connection Successful
+Local Version: v5.0.3, Latest Version: v5.0.4
+GUI needs to be updated. Download at https://github.com/OpenBCI/OpenBCI_GUI/releases/latest
+The file "/Users/michaelpaller/Documents/OpenBCI_GUI/Settings/UserPlaybackHistory.json" is missing or inaccessible, make sure the URL is valid or that the file has been added to your sketch and is readable.
+OpenBCI_GUI::Control Panel: Playback history file not found or other error.
+null
+OpenBCI_GUI::Setup: Setup is complete!
+SHUTDOWN HOOK
