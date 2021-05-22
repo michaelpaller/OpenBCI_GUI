@@ -80,6 +80,8 @@ class W_Spectrogram extends Widget {
         graphW = w - paddingRight - paddingLeft;
         graphH = h - paddingBottom - paddingTop;
 
+        dataImg = createImage(dataImageW, dataImageH, RGB);
+
         settings.spectMaxFrqSave = 1;
         settings.spectSampleRateSave = 2;
         settings.spectLogLinSave = 0;
@@ -95,11 +97,6 @@ class W_Spectrogram extends Widget {
         addDropdown("SpectrogramMaxFreq", "Max Freq", Arrays.asList(settings.spectMaxFrqArray), settings.spectMaxFrqSave);
         addDropdown("SpectrogramSampleRate", "Samples", Arrays.asList(settings.spectSampleRateArray), settings.spectSampleRateSave);
         addDropdown("SpectrogramLogLin", "Log/Lin", Arrays.asList(settings.fftLogLinArray), settings.spectLogLinSave);
-
-        //Resize the height of the data image using default 
-        dataImageH = vertAxisLabel[0] * 2;
-        //Create image using correct dimensions! Fixes bug where image size and labels do not align on session start.
-        dataImg = createImage(dataImageW, dataImageH, RGB);
     }
 
     void update(){
@@ -281,7 +278,7 @@ class W_Spectrogram extends Widget {
             stroke(255);
             fill(255);
             strokeWeight(2);
-            textSize(11);
+            textSize(10);
             for (int i = 0; i <= numHorizAxisDivs; i++) {
                 float offset = scaledW * dataImageW * (float(i) / numHorizAxisDivs);
                 line(horizAxisX + offset, horizAxisY, horizAxisX + offset, horizAxisY + tickMarkSize);
@@ -308,14 +305,13 @@ class W_Spectrogram extends Widget {
             float vertAxisY = graphY;
             stroke(255);
             fill(255);
-            textSize(12);
             strokeWeight(2);
             for (int i = 0; i <= numVertAxisDivs; i++) {
                 float offset = scaledH * dataImageH * (float(i) / numVertAxisDivs);
                 //if (i <= numVertAxisDivs/2) offset -= 2;
                 line(vertAxisX, vertAxisY + offset, vertAxisX - tickMarkSize, vertAxisY + offset);
                 if (vertAxisLabel[i] == 0) midLineY = int(vertAxisY + offset);
-                offset += paddingTop/2;
+                offset += paddingTop - 2;
                 text(vertAxisLabel[i], vertAxisX - tickMarkSize*2 - textWidth(Integer.toString(vertAxisLabel[i])), vertAxisY + offset);
             }
         popStyle();
@@ -368,10 +364,6 @@ class W_Spectrogram extends Widget {
 
         for (int i = 0; i < topChansToActivate.length; i++) {
             spectChanSelectTop.setToggleState(topChansToActivate[i], true);
-            
-        }
-
-        for (int i = 0; i < botChansToActivate.length; i++) {
             spectChanSelectBot.setToggleState(botChansToActivate[i], true);
         }
     }
@@ -432,7 +424,7 @@ class W_Spectrogram extends Widget {
 //triggered when there is an event in the Spectrogram Widget MaxFreq. Dropdown
 void SpectrogramMaxFreq(int n) {
     settings.spectMaxFrqSave = n;
-    //reset the vertical axis labels
+    //reset the vertical axis labelss
     w_spectrogram.vertAxisLabel = w_spectrogram.vertAxisLabels[n];
     //Resize the height of the data image
     w_spectrogram.dataImageH = w_spectrogram.vertAxisLabel[0] * 2;

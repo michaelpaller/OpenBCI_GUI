@@ -12,7 +12,6 @@ class DataSourcePlayback implements DataSource, AccelerometerCapableBoard, Analo
     
     private Board underlyingBoard = null;
     private int sampleRate = -1;
-    private int numChannels = 0;  // use it instead getTotalChannelCount() method for old playback files
 
     DataSourcePlayback(String filePath) {
         playbackFilePath = filePath;
@@ -112,13 +111,9 @@ class DataSourcePlayback implements DataSource, AccelerometerCapableBoard, Analo
         for (int iData=0; iData<dataLength; iData++) {
             String line = lines[dataStart + iData];
             String[] valStrs = line.split(",");
-            if (((valStrs.length - 1) != getTotalChannelCount()) && (numChannels == 0)) {
-                outputWarn("you are using old file for playback.");
-            }
-            numChannels = valStrs.length - 1;  // -1 becaise of gui's timestamps
 
-            double[] row = new double[numChannels];
-            for (int iCol = 0; iCol < numChannels; iCol++) {
+            double[] row = new double[getTotalChannelCount()];
+            for (int iCol = 0; iCol < getTotalChannelCount(); iCol++) {
                 row[iCol] = Double.parseDouble(valStrs[iCol]);
             }
             rawData.add(row);
@@ -226,17 +221,15 @@ class DataSourcePlayback implements DataSource, AccelerometerCapableBoard, Analo
 
     @Override
     public int getTotalChannelCount() {
-        if (numChannels == 0)
-            return underlyingBoard.getTotalChannelCount();
-        return numChannels;
+        return underlyingBoard.getTotalChannelCount();
     }
 
     @Override
     public double[][] getFrameData() {
-        double[][] array = new double[numChannels][numNewSamplesThisFrame];
+        double[][] array = new double[getTotalChannelCount()][numNewSamplesThisFrame];
         List<double[]> list = getData(numNewSamplesThisFrame);
         for (int i = 0; i < numNewSamplesThisFrame; i++) {
-            for (int j = 0; j < numChannels; j++) {
+            for (int j = 0; j < getTotalChannelCount(); j++) {
                 array[j][i] = list.get(i)[j];
             }
         }
@@ -252,7 +245,7 @@ class DataSourcePlayback implements DataSource, AccelerometerCapableBoard, Analo
         if (maxSamples > currentSample) {
             int sampleDiff = maxSamples - currentSample;
 
-            double[] emptyData = new double[numChannels];
+            double[] emptyData = new double[getTotalChannelCount()];
             ArrayList<double[]> newResult = new ArrayList(maxSamples);
             for (int i=0; i<sampleDiff; i++) {
                 newResult.add(emptyData);

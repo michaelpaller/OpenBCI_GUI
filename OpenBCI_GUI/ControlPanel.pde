@@ -179,6 +179,10 @@ class ControlPanel {
 
     public void draw() {
 
+        pushStyle();
+
+        noStroke();
+
         initBox.draw();
 
         if (systemMode == 10) {
@@ -268,6 +272,8 @@ class ControlPanel {
             text(stopInstructions, x + globalPadding*2, y + globalPadding*3, w - globalPadding*4, dataSourceBox.h - globalPadding*4);
             popStyle();
         }
+
+        popStyle();
     }
 
     public void hideRadioPopoutBox() {
@@ -334,11 +340,11 @@ class DataSourceBox {
         sourceList.setPosition(_x, _y);
         // sourceList.itemHeight = 28;
         // sourceList.padding = 9;
+        sourceList.addItem("CYTON (live)", DATASOURCE_CYTON);
+        sourceList.addItem("GANGLION (live)", DATASOURCE_GANGLION);
         if (galeaEnabled) {
             sourceList.addItem("GALEA (live)", DATASOURCE_GALEA);
         }
-        sourceList.addItem("CYTON (live)", DATASOURCE_CYTON);
-        sourceList.addItem("GANGLION (live)", DATASOURCE_GANGLION);
         sourceList.addItem("PLAYBACK (from file)", DATASOURCE_PLAYBACKFILE);
         sourceList.addItem("SYNTHETIC (algorithmic)", DATASOURCE_SYNTHETIC);
         sourceList.addItem("STREAMING (from external)", DATASOURCE_STREAMING);
@@ -782,7 +788,6 @@ class WifiBox {
 
     public void update() {
         wifiList.updateMenu();
-        copyPaste.checkForCopyPaste(staticIPAddressTF);
     }
 
     public void draw() {
@@ -824,7 +829,6 @@ class WifiBox {
             textFont(h3, 16);
             textAlign(LEFT, TOP);
             text(boardIpInfo, x + w/2 - textWidth(boardIpInfo)/2, y + h - padding - 46);
-            popStyle();
 
             if (wifiIsRefreshing){
                 //Display spinning cog gif
@@ -1179,7 +1183,7 @@ class SessionDataBox {
     }
 
     public void update() {
-        copyPaste.checkForCopyPaste(sessionNameTextfield);
+
     }
 
     public void draw() {
@@ -1213,7 +1217,9 @@ class SessionDataBox {
             fill(OPENBCI_DARKBLUE);
             maxDurationDropdown.setPosition(x + maxDurTextWidth, int(outputODF.getPosition()[1]) + 24 + padding);
             //Carefully draw some text to the left of above dropdown, otherwise this text moves when changing WiFi mode
-            int extraPadding = 20;
+            int extraPadding = (controlPanel.getWifiSearchStyle() == controlPanel.WIFI_STATIC) || selectedProtocol != BoardProtocol.WIFI
+                ? 20 
+                : 5;
             fill(OPENBCI_DARKBLUE);
             textFont(p4, 14);
             text("Max File Duration", maxDurText_x, y + h - 24 - padding + extraPadding);
@@ -1873,15 +1879,6 @@ class RecentPlaybackBox {
 
     private void getRecentPlaybackFiles() {
         int numFilesToShow = 10;
-
-        File f = new File(userPlaybackHistoryFile);
-        if (!f.exists()) {
-            println("OpenBCI_GUI::Control Panel: Playback history file not found.");
-            recentPlaybackFilesHaveUpdated = true;
-            playbackHistoryFileExists = false;
-            return;
-        }
-
         try {
             JSONObject playbackHistory = loadJSONObject(userPlaybackHistoryFile);
             JSONArray recentFilesArray = playbackHistory.getJSONArray("playbackFileHistory");
@@ -1905,7 +1902,7 @@ class RecentPlaybackBox {
 
             playbackHistoryFileExists = true;
         } catch (Exception e) {
-            println("OpenBCI_GUI::Control Panel: Other error! Please submit an issue on Github and share this console log.");
+            println("OpenBCI_GUI::Control Panel: Playback history file not found or other error.");
             println(e.getMessage());
             playbackHistoryFileExists = false;
         }
@@ -1971,8 +1968,7 @@ class GaleaBox {
     private final String boxLabel = "GALEA CONFIG";
     private final String ipAddressLabel = "IP Address";
     private final String sampleRateLabel = "Sample Rate";
-    //private String ipAddress = "192.168.4.1";
-    private String ipAddress = "127.0.0.1"; //For use with testing emulator
+    private String ipAddress = "192.168.4.1";
     private ControlP5 localCP5;
     private Textfield ipAddressTF;
     private ScrollableList srList;
@@ -1995,7 +1991,7 @@ class GaleaBox {
     }
 
     public void update() {
-        copyPaste.checkForCopyPaste(ipAddressTF);
+        // nothing
     }
 
     public void draw() {
@@ -2208,8 +2204,7 @@ class StreamingBoardBox {
     }
 
     public void update() {
-        copyPaste.checkForCopyPaste(ipAddress);
-        copyPaste.checkForCopyPaste(port);
+        // nothing
     }
 
     public void draw() {
@@ -2739,7 +2734,7 @@ class InitBox {
             } else if (eegDataSource == DATASOURCE_CYTON && selectedProtocol == BoardProtocol.WIFI && wifi_portName == "N/A" && controlPanel.getWifiSearchStyle() == controlPanel.WIFI_DYNAMIC) {
                 output("No Wifi Shield selected. Please select your Wifi Shield and retry system initiation.");
                 return;
-            } else if (eegDataSource == DATASOURCE_PLAYBACKFILE && playbackData_fname == "N/A" && sdData_fname == "N/A") { //if data source == playback && playback file == 'N/A'
+            } else if (eegDataSource == DATASOURCE_PLAYBACKFILE && playbackData_fname == "N/A" && sdData_fname == "N/A" && logData_fname == "N/A") { //if data source == playback && playback file == 'N/A'
                 output("No playback file selected. Please select a playback file and retry system initiation.");        // tell user that they need to select a file before the system can be started
                 return;
             } else if (eegDataSource == DATASOURCE_GANGLION && (selectedProtocol == BoardProtocol.BLE || selectedProtocol == BoardProtocol.BLED112) && ganglion_portName == "N/A") {
@@ -2799,5 +2794,3 @@ class InitBox {
         initSystemButton.getCaptionLabel().setText(text);
     }
 };
-
-

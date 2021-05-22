@@ -121,6 +121,7 @@ class W_timeSeries extends Widget {
     private ADS1299SettingsController adsSettingsController;
 
     private boolean allowSpillover = false;
+    private TextBox[] impValuesMontage;
     private boolean hasScrollbar = true; //used to turn playback scrollbar widget on/off
 
     W_timeSeries(PApplet _parent) {
@@ -241,19 +242,19 @@ class W_timeSeries extends Widget {
         super.draw(); //calls the parent draw() method of Widget (DON'T REMOVE)
 
         //remember to refer to x,y,w,h which are the positioning variables of the Widget class
+        pushStyle();
         //draw channel bars
         for (int i = 0; i < tsChanSelect.activeChan.size(); i++) {
             int activeChan = tsChanSelect.activeChan.get(i);
             channelBars[activeChan].draw(getAdsSettingsVisible());
         }
+        popStyle();
 
         //Display playback scrollbar, timeDisplay, or ADSSettingsController depending on data source
         if ((currentBoard instanceof FileBoard) && hasScrollbar) { //you will only ever see the playback widget in Playback Mode ... otherwise not visible
-            pushStyle();
             fill(0,0,0,20);
             stroke(31,69,110);
             rect(xF, ts_y + ts_h + playbackWidgetHeight + 5, wF, playbackWidgetHeight);
-            popStyle();
             scrollbar.draw();
         } else if (currentBoard instanceof ADS1299SettingsBoard) {
             //Hide time display when ADSSettingsController is open for compatible boards
@@ -268,6 +269,8 @@ class W_timeSeries extends Widget {
         tscp5.draw();
         
         tsChanSelect.draw();
+
+        popStyle();
     }
 
     void screenResized() {
@@ -502,7 +505,7 @@ class ChannelBar {
         onOff_diameter = h > 26 ? 26 : h - 2;
         createOnOffButton("onOffButton"+channelIndex, channelString, x + 6, y + int(h/2) - int(onOff_diameter/2), onOff_diameter, onOff_diameter);
 
-        if(currentBoard instanceof ImpedanceSettingsBoard && !(currentBoard instanceof BoardGalea)) {
+        if(currentBoard instanceof ImpedanceSettingsBoard) {
             impButton_diameter = 22;
             createImpButton("impButton"+channelIndex, "\u2126", x + 36, y + int(h/2) - int(impButton_diameter/2), impButton_diameter, impButton_diameter);
         } else {
@@ -595,10 +598,6 @@ class ChannelBar {
         if (yAxisMin.isFocus() || yAxisMax.isFocus()) {
             textFieldIsActive = true;
         }
-
-        copyPaste.checkForCopyPaste(yAxisMax);
-        copyPaste.checkForCopyPaste(yAxisMin);
-
     }
 
     private String getFmt(float val) {
@@ -633,6 +632,7 @@ class ChannelBar {
     }
 
     public void draw(boolean hardwareSettingsAreOpen) {        
+        pushStyle();
 
         plot.beginDraw();
         plot.drawBox();
@@ -656,7 +656,6 @@ class ChannelBar {
         stroke(31,69,110, 50);
         noFill();
         rect(x,y,w,h);
-        popStyle();
 
         //draw channelBar separator line in the middle of interChannelBarSpace
         if (!isBottomChannel()) {
@@ -665,22 +664,16 @@ class ChannelBar {
             strokeWeight(1);
             int separator_y = y + h + int(w_timeSeries.interChannelBarSpace/2);
             line(x, separator_y, x + w, separator_y);
-            popStyle();
         }
 
         //draw impedance check Button and values
         drawVoltageValue = true;
-        if (currentBoard instanceof ImpedanceSettingsBoard && !(currentBoard instanceof BoardGalea)) {
+        if (currentBoard instanceof ImpedanceSettingsBoard) {
             impCheckButton.setVisible(true);
             if(((ImpedanceSettingsBoard)currentBoard).isCheckingImpedance(channelIndex)) {
                 impValue.draw();
                 drawVoltageValue = false;
             }
-        }
-
-        if (currentBoard instanceof BoardGalea && ((ImpedanceSettingsBoard)currentBoard).isCheckingImpedance(channelIndex)) {
-            impValue.draw();
-            drawVoltageValue = false;
         }
         
         if (drawVoltageValue) {
@@ -695,6 +688,7 @@ class ChannelBar {
         yAxisMin.setVisible(b);
         yAxisMax.setVisible(b);
 
+        popStyle();
         try {
             cbCp5.draw();
         } catch (NullPointerException e) {
@@ -790,7 +784,7 @@ class ChannelBar {
         onOffButton.setSize(onOff_diameter, onOff_diameter);
         onOffButton.setPosition(x + 6, y + int(h/2) - int(onOff_diameter/2));
 
-        if(currentBoard instanceof ImpedanceSettingsBoard && !(currentBoard instanceof BoardGalea)) {
+        if(currentBoard instanceof ImpedanceSettingsBoard) {
             impCheckButton.setPosition(x + 36, y + int(h/2) - int(impButton_diameter/2));
         }
     }
@@ -814,13 +808,10 @@ class ChannelBar {
         onOffButton.setCircularButton(true);
         onOffButton.onRelease(new CallbackListener() {
             public void controlEvent(CallbackEvent theEvent) {
-                boolean newState = !currentBoard.isEXGChannelActive(channelIndex);
-                println("[" + channelString + "] onOff released - " + (newState ? "On" : "Off"));
-                currentBoard.setEXGChannelActive(channelIndex, newState);
+                println("[" + channelString + "] onOff released");
+                currentBoard.setEXGChannelActive(channelIndex, !currentBoard.isEXGChannelActive(channelIndex));
                 if (currentBoard instanceof ADS1299SettingsBoard) {
                     w_timeSeries.adsSettingsController.updateChanSettingsDropdowns(channelIndex, currentBoard.isEXGChannelActive(channelIndex));
-                    boolean hasUnappliedChanges = currentBoard.isEXGChannelActive(channelIndex) != newState;
-                    w_timeSeries.adsSettingsController.setHasUnappliedSettings(channelIndex, hasUnappliedChanges);
                 }
             }
         });
